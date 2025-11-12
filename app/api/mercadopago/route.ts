@@ -1,5 +1,6 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
+import { sendEmail } from "@/app/lib/resend";
 
 async function readJsonBody(request: NextRequest): Promise<unknown | null> {
   const contentType = request.headers.get("content-type") || "";
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
     apiKey,
     clientEmail,
     clientName,
+    backUrl,
   } = body as {
     description: string;
     paymentAmount: number;
@@ -50,6 +52,7 @@ export async function POST(request: NextRequest) {
     apiKey: string;
     clientEmail: string;
     clientName: string;
+    backUrl: string;
   };
   //Guardar en base de datos
   console.log({
@@ -59,6 +62,7 @@ export async function POST(request: NextRequest) {
     apiKey,
     clientEmail,
     clientName,
+    backUrl,
   });
 
   const paymentId = generateHash();
@@ -71,8 +75,9 @@ export async function POST(request: NextRequest) {
       paymentMethod: null,
       notificationUrl: notificationUrl,
       description,
-      clientEmail: null,
+      clientEmail: clientEmail,
       clientName: null,
+      backUrl: backUrl,
     },
   });
 
@@ -87,21 +92,20 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const body = await readJsonBody(request);
 
-  const {
-    paymentId,
-    clientEmail,
-    cardNumber,
-    cardExpirationDate,
-    cardCvv,
-    cardHolderName,
-  } = body as {
-    paymentId: string;
-    clientEmail: string;
-    cardNumber: string;
-    cardExpirationDate: string;
-    cardCvv: string;
-    cardHolderName: string;
-  };
+  const { paymentId, cardNumber, cardExpirationDate, cardCvv, cardHolderName } =
+    body as {
+      paymentId: string;
+      cardNumber: string;
+      cardExpirationDate: string;
+      cardCvv: string;
+      cardHolderName: string;
+    };
+
+  console.log("cardNumber: ", cardNumber);
+  console.log("cardExpirationDate: ", cardExpirationDate);
+  console.log("cardCvv: ", cardCvv);
+  console.log("cardHolderName: ", cardHolderName);
+  console.log("paymentId: ", paymentId);
 
   const card = await prisma.card.findUnique({
     where: {
@@ -126,32 +130,57 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Pago no encontrado" }, { status: 404 });
   }
 
-  await validateCard(
+  const resValidateCard = await validateCard(
     card,
     cardCvv,
     cardExpirationDate,
-    payment.notificationUrl
+    payment.notificationUrl,
+    payment
   );
 
-  await prisma.payment.update({
+  if (resValidateCard && resValidateCard.error) {
+    return NextResponse.json(resValidateCard, { status: 400 });
+  }
+
+  const updatedPayment = await prisma.payment.update({
     where: {
       paymentId: paymentId,
     },
     data: {
       paymentStatus: "approved",
       paymentMethod: card.cardType,
-      clientEmail: clientEmail,
       clientName: cardHolderName,
     },
   });
 
-  console.log("Pago en base de datos: ", payment);
+  if (updatedPayment.clientEmail) {
+    await sendEmail(
+      updatedPayment.clientEmail,
+      "Pago aprobado",
+      "approved",
+      {
+        paymentId: updatedPayment.paymentId,
+        paymentAmount: updatedPayment.paymentAmount,
+        description: updatedPayment.description,
+        paymentMethod: updatedPayment.paymentMethod,
+        clientName: updatedPayment.clientName,
+        createdAt: updatedPayment.createdAt.toISOString(),
+        updatedAt: updatedPayment.updatedAt.toISOString(),
+      }
+    );
+  }
 
-  await notifyPayment(payment.notificationUrl, "approved", "Pago aprobado");
+  await notifyPayment(
+    updatedPayment.notificationUrl,
+    "approved",
+    "Pago aprobado",
+    updatedPayment
+  );
 
   return NextResponse.json({
-    message: "PUT recibido",
-    payment,
+    message: "Pago aprobado",
+    payment: updatedPayment,
+    backUrl: updatedPayment.backUrl,
   });
 }
 
@@ -166,32 +195,47 @@ async function validateCard(
   card: any,
   cardCvv: string,
   cardExpirationDate: string,
-  notificationUrl: string
+  notificationUrl: string,
+  payment: any
 ) {
   if (!card) {
-    await notifyPayment(notificationUrl, "failed", "Tarjeta no encontrada");
+    await notifyPayment(
+      notificationUrl,
+      "failed",
+      "Tarjeta no encontrada",
+      payment
+    );
     return { error: "Tarjeta no encontrada" };
   }
 
   if (card.cardCvv !== cardCvv) {
-    await notifyPayment(notificationUrl, "failed", "CVV no válido");
+    await notifyPayment(notificationUrl, "failed", "CVV no válido", payment);
     return { error: "CVV no válido" };
   }
 
+  console.log("Fecha de expiración card: ", card.cardExpirationDate);
+  console.log("Fecha de expiración enviada: ", cardExpirationDate);
   if (card.cardExpirationDate !== cardExpirationDate) {
     await notifyPayment(
       notificationUrl,
       "failed",
-      "Fecha de expiración no válida"
+      "Fecha de expiración no válida",
+      payment
     );
-    return { error: "Fecha de expiración no válida" };
+    return {
+      error: "Fecha de expiración no válida",
+      paymentId: payment.paymentId,
+    };
   }
+
+  return { success: true, paymentId: payment.paymentId };
 }
 
 async function notifyPayment(
   notificationUrl: string,
   status: string,
-  message: string
+  message: string,
+  payment: any
 ) {
   try {
     console.log("notificationUrl: ", notificationUrl);
@@ -201,12 +245,31 @@ async function notifyPayment(
     // Corregir typo común "locahost" -> "localhost"
     const correctedUrl = notificationUrl.replace(/locahost/g, "localhost");
 
+    // Preparar datos completos del pago para la notificación
+    const notificationData = {
+      status: status,
+      message: message,
+      payment: {
+        paymentId: payment.paymentId,
+        paymentStatus: payment.paymentStatus,
+        paymentAmount: payment.paymentAmount,
+        paymentMethod: payment.paymentMethod,
+        description: payment.description,
+        clientEmail: payment.clientEmail,
+        clientName: payment.clientName,
+        backUrl: payment.backUrl,
+        createdAt: payment.createdAt,
+        updatedAt: payment.updatedAt,
+      },
+      timestamp: new Date().toISOString(),
+    };
+
     const response = await fetch(correctedUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ status: status, message: message }),
+      body: JSON.stringify(notificationData),
     });
 
     if (!response.ok) {
@@ -215,6 +278,15 @@ async function notifyPayment(
       );
       return null;
     }
+
+    await prisma.payment.update({
+      where: {
+        paymentId: payment.paymentId,
+      },
+      data: {
+        notificationRecived: true,
+      },
+    });
 
     return await response.json();
   } catch (error) {

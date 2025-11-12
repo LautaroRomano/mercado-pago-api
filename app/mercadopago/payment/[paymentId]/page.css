@@ -1,0 +1,38 @@
+.payment-page {
+  min-height: 100vh;
+  background: #ddeefc;
+  padding: 50px 15px;
+}
+
+.payment-page__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  gap: 40px;
+  align-items: flex-end;
+}
+
+@media screen and (max-width: 1024px) {
+  .payment-page__container {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+.payment-page__form {
+  flex: 1;
+  min-width: 0;
+}
+
+.payment-page__summary {
+  flex: 1;
+}
+
+.payment-page__form .wrapper {
+  padding: 0;
+}
+
+.payment-page__form .card-form {
+  margin: 0;
+}
+

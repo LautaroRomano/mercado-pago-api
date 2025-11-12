@@ -21,9 +21,11 @@ model Payment {
   paymentAmount Float
   paymentMethod String? // debit_card, credit_card
   notificationUrl String
+  backUrl String
   description String
   clientEmail String?
   clientName String?
+  notificationRecived Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
