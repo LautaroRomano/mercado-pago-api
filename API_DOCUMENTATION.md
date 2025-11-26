@@ -47,14 +47,14 @@ Actualmente la API no requiere autenticación, pero se recomienda implementar un
 
 ## Endpoints
 
-### GET /api/mercadopago
+### GET https://mercado-pago-api-sigma.vercel.app/api/mercadopago
 
 Endpoint de bienvenida que verifica el estado de la API.
 
 #### Request
 
 ```http
-GET /api/mercadopago
+GET https://mercado-pago-api-sigma.vercel.app/api/mercadopago
 ```
 
 #### Response
@@ -69,14 +69,14 @@ GET /api/mercadopago
 
 ---
 
-### POST /api/mercadopago
+### POST https://mercado-pago-api-sigma.vercel.app/api/mercadopago
 
 Crea un nuevo pago pendiente y genera un `paymentId` único.
 
 #### Request
 
 ```http
-POST /api/mercadopago
+POST https://mercado-pago-api-sigma.vercel.app/api/mercadopago
 Content-Type: application/json
 ```
 
@@ -98,7 +98,7 @@ Content-Type: application/json
 {
   "description": "Compra de producto XYZ",
   "paymentAmount": 1500.00,
-  "notificationUrl": "https://tu-servidor.com/webhook",
+  "notificationUrl": "https://mercado-pago-api-sigma.vercel.app/webhook",
   "apiKey": "tu-api-key",
   "clientEmail": "cliente@example.com",
   "clientName": "Juan Pérez",
