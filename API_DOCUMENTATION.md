@@ -102,7 +102,7 @@ Content-Type: application/json
   "apiKey": "tu-api-key",
   "clientEmail": "cliente@example.com",
   "clientName": "Juan Pérez",
-  "backUrl": "https://tu-servidor.com/payment-success"
+  "backUrl": "https://mercado-pago-api-sigma.vercel.app/payment-success"
 }
 ```
 
@@ -113,7 +113,7 @@ Content-Type: application/json
 ```json
 {
   "message": "POST recibido",
-  "paymentRoute": "http://localhost:3000/mercadopago/payment/abc123xyz456"
+  "paymentRoute": "https://mercado-pago-api-sigma.vercel.app/mercadopago/payment/abc123xyz456"
 }
 ```
 
@@ -222,7 +222,7 @@ Valida los datos de una tarjeta sin procesar el pago. Útil para validar antes d
 #### Request
 
 ```http
-POST /api/mercadopago/validate
+POST https://mercado-pago-api-sigma.vercel.app/api/mercadopago/validate
 Content-Type: application/json
 ```
 
@@ -298,7 +298,7 @@ Obtiene la información completa de un pago específico.
 #### Request
 
 ```http
-GET /api/mercadopago/payment/abc123xyz456
+GET https://mercado-pago-api-sigma.vercel.app/api/mercadopago/payment/abc123xyz456
 ```
 
 #### Path Parameters
@@ -319,8 +319,8 @@ GET /api/mercadopago/payment/abc123xyz456
     "paymentStatus": "approved",
     "paymentAmount": 1500.00,
     "paymentMethod": "visa",
-    "notificationUrl": "https://tu-servidor.com/webhook",
-    "backUrl": "https://tu-servidor.com/payment-success",
+    "notificationUrl": "https://mercado-pago-api-sigma.vercel.app/webhook",
+    "backUrl": "https://mercado-pago-api-sigma.vercel.app/payment-success",
     "description": "Compra de producto XYZ",
     "clientEmail": "cliente@example.com",
     "clientName": "JUAN PEREZ",
@@ -430,7 +430,7 @@ La API envía notificaciones automáticamente a la `notificationUrl` especificad
     "description": "Compra de producto XYZ",
     "clientEmail": "cliente@example.com",
     "clientName": "JUAN PEREZ",
-    "backUrl": "https://tu-servidor.com/payment-success",
+    "backUrl": "https://mercado-pago-api-sigma.vercel.app/payment-success",
     "createdAt": "2024-01-15T10:30:00.000Z",
     "updatedAt": "2024-01-15T10:35:00.000Z"
   },
@@ -452,7 +452,7 @@ La API envía notificaciones automáticamente a la `notificationUrl` especificad
     "description": "Compra de producto XYZ",
     "clientEmail": null,
     "clientName": null,
-    "backUrl": "https://tu-servidor.com/payment-success",
+    "backUrl": "https://mercado-pago-api-sigma.vercel.app/payment-success",
     "createdAt": "2024-01-15T10:30:00.000Z",
     "updatedAt": "2024-01-15T10:35:00.000Z"
   },
@@ -494,7 +494,7 @@ La API corrige automáticamente el typo común "locahost" → "localhost" en las
 #### 1. Crear un Pago
 
 ```bash
-curl -X POST http://localhost:3000/api/mercadopago \
+curl -X POST https://mercado-pago-api-sigma.vercel.app/api/mercadopago \
   -H "Content-Type: application/json" \
   -d '{
     "description": "Compra de producto XYZ",
@@ -503,7 +503,7 @@ curl -X POST http://localhost:3000/api/mercadopago \
     "apiKey": "tu-api-key",
     "clientEmail": "cliente@example.com",
     "clientName": "Juan Pérez",
-    "backUrl": "https://tu-servidor.com/payment-success"
+    "backUrl": "https://mercado-pago-api-sigma.vercel.app/payment-success"
   }'
 ```
 
@@ -511,14 +511,14 @@ curl -X POST http://localhost:3000/api/mercadopago \
 ```json
 {
   "message": "POST recibido",
-  "paymentRoute": "http://localhost:3000/mercadopago/payment/abc123xyz456"
+  "paymentRoute": "https://mercado-pago-api-sigma.vercel.app/mercadopago/payment/abc123xyz456"
 }
 ```
 
 #### 2. Validar Tarjeta (Opcional)
 
 ```bash
-curl -X POST http://localhost:3000/api/mercadopago/validate \
+curl -X POST https://mercado-pago-api-sigma.vercel.app/api/mercadopago/validate \
   -H "Content-Type: application/json" \
   -d '{
     "cardNumber": "1234567890123456",
@@ -538,7 +538,7 @@ curl -X POST http://localhost:3000/api/mercadopago/validate \
 #### 3. Procesar el Pago
 
 ```bash
-curl -X PUT http://localhost:3000/api/mercadopago \
+curl -X PUT https://mercado-pago-api-sigma.vercel.app/api/mercadopago \
   -H "Content-Type: application/json" \
   -d '{
     "paymentId": "abc123xyz456",
@@ -555,14 +555,14 @@ curl -X PUT http://localhost:3000/api/mercadopago \
 {
   "message": "Pago aprobado",
   "payment": { ... },
-  "backUrl": "https://tu-servidor.com/payment-success"
+  "backUrl": "https://mercado-pago-api-sigma.vercel.app/payment-success"
 }
 ```
 
 #### 4. Consultar Estado del Pago
 
 ```bash
-curl http://localhost:3000/api/mercadopago/payment/abc123xyz456
+curl https://mercado-pago-api-sigma.vercel.app/api/mercadopago/payment/abc123xyz456
 ```
 
 **Respuesta:**
@@ -578,7 +578,7 @@ curl http://localhost:3000/api/mercadopago/payment/abc123xyz456
 ```javascript
 // 1. Crear pago
 const createPayment = async () => {
-  const response = await fetch('http://localhost:3000/api/mercadopago', {
+  const response = await fetch('https://mercado-pago-api-sigma.vercel.app/api/mercadopago', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -586,11 +586,11 @@ const createPayment = async () => {
     body: JSON.stringify({
       description: 'Compra de producto XYZ',
       paymentAmount: 1500.00,
-      notificationUrl: 'https://tu-servidor.com/webhook',
+      notificationUrl: 'https://mercado-pago-api-sigma.vercel.app/webhook',
       apiKey: 'tu-api-key',
       clientEmail: 'cliente@example.com',
       clientName: 'Juan Pérez',
-      backUrl: 'https://tu-servidor.com/payment-success'
+      backUrl: 'https://mercado-pago-api-sigma.vercel.app/payment-success'
     })
   });
   
