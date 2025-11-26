@@ -34,7 +34,7 @@ La API envía notificaciones webhook automáticamente cuando un pago es aprobado
 ## Base URL
 
 ```
-http://localhost:3000
+https://mercado-pago-api-sigma.vercel.app/
 ```
 
 ---
