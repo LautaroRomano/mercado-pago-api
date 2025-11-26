@@ -81,7 +81,8 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  const paymentRoute = "http://localhost:3000/mercadopago/payment/" + paymentId;
+  // const paymentRoute = "http://localhost:3000/mercadopago/payment/" + paymentId;
+  const paymentRoute = "https://mercado-pago-api-sigma.vercel.app/mercadopago/payment/" + paymentId;
 
   return NextResponse.json({
     message: "POST recibido",
